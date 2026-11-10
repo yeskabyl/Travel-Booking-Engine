@@ -10,8 +10,6 @@ Travel Booking Engine is a console-based application developed using Java. The p
 
 The system is designed to manage travel booking operations and demonstrate flexible software architecture through reusable components.
 
-This project was developed as an individual academic project.
-
 ## Project Objectives
 
 - Develop a structured Java console application.
