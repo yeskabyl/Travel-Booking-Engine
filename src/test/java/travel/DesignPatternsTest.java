@@ -9,6 +9,10 @@ import travel.state.CancelledState;
 import org.junit.jupiter.api.Test;
 import travel.strategy.BestRatedOfferStrategy;
 import travel.strategy.CheapestOfferStrategy;
+import travel.decorator.BaggageDecorator;
+import travel.decorator.BasicBooking;
+import travel.decorator.BookingComponent;
+import travel.decorator.InsuranceDecorator;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -79,5 +83,17 @@ class DesignPatternsTest {
     @Test
     void builderRejectsMissingComponents() {
         assertThrows(IllegalStateException.class, () -> new TripBuilder().build());
+    }
+
+    @Test
+    void decoratorAddsInsuranceAndBaggageToTripPrice() {
+        BookingComponent booking = new BasicBooking("Complete trip: Astana to Istanbul", 905.0);
+
+        booking = new InsuranceDecorator(booking);
+        booking = new BaggageDecorator(booking);
+
+        assertEquals(905.0 + 50 + 30, booking.getPrice(), 0.001);
+        assertEquals("Complete trip: Astana to Istanbul + Insurance + Extra Baggage",
+                booking.getDescription());
     }
 }
