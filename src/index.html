@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Booking Engine</title>
+    <style>
+        :root {
+            --bg: #f4f1ec;
+            --card: #ffffff;
+            --ink: #1d2433;
+            --muted: #6b7280;
+            --line: #e5e1da;
+            --accent: #0f5c63;
+            --accent-soft: #e3efef;
+            --warm: #d9783b;
+            --ok: #2f7d4f;
+            --ok-soft: #e4f2e9;
+            --bad: #b3423a;
+            --bad-soft: #f8e5e3;
+            --pending: #9a6b12;
+            --pending-soft: #fbf0d9;
+            --radius: 14px;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            font-size: 15px;
+            line-height: 1.45;
+        }
+        button { font: inherit; cursor: pointer; }
+        input { font: inherit; }
+
+        header { background: var(--accent); color: #fff; padding: 28px 24px 70px; }
+        .wrap { max-width: 1040px; margin: 0 auto; }
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+        .brand-mark {
+            width: 30px; height: 30px; border-radius: 8px; background: var(--warm);
+            display: grid; place-items: center; font-size: 16px;
+        }
+        .route { margin-top: 26px; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 18px 36px; }
+        .route .city { font-size: 34px; font-weight: 700; letter-spacing: -0.5px; }
+        .route .label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: .7; }
+        .route .arrow { font-size: 26px; opacity: .6; padding-bottom: 4px; }
+        .route .dates { margin-left: auto; text-align: right; }
+        .route .dates b { font-size: 17px; }
+        .route-picker { margin-top: 18px; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 18px; }
+        .route-picker .field { display: flex; flex-direction: column; gap: 4px; }
+        .route-picker .label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: .7; }
+        .route-picker input { color-scheme: dark; }
+        .route-picker select, .route-picker input {
+            font: inherit; font-weight: 600; color: #fff; background: rgba(255,255,255,.12);
+            border: 1px solid rgba(255,255,255,.3); border-radius: 10px; padding: 7px 12px; cursor: pointer;
+        }
+        .route-picker select option { color: var(--ink); }
+        .car-class {
+            display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 6px;
+            background: var(--bg); color: var(--muted); margin-top: 4px;
+        }
+
+        nav { max-width: 1040px; margin: -44px auto 0; padding: 0 24px; }
+        .tabs {
+            background: var(--card); border-radius: var(--radius);
+            box-shadow: 0 6px 24px rgba(20, 30, 40, .08);
+            display: flex; padding: 6px; gap: 4px; overflow-x: auto;
+        }
+        .tab {
+            flex: 1; min-width: 120px; border: 0; background: transparent; color: var(--muted);
+            padding: 12px 14px; border-radius: 10px; font-weight: 600; white-space: nowrap;
+        }
+        .tab:hover { color: var(--ink); }
+        .tab.active { background: var(--accent-soft); color: var(--accent); }
+        .tab .count {
+            display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 6px;
+            border-radius: 10px; background: var(--warm); color: #fff; font-size: 12px; line-height: 20px;
+        }
+
+        .tab .count[hidden] { display: none; }
+
+        main { max-width: 1040px; margin: 0 auto; padding: 28px 24px 60px; }
+        section { display: none; }
+        section.active { display: block; }
+        h2 { margin: 0 0 4px; font-size: 22px; }
+        .sub { color: var(--muted); margin: 0 0 20px; }
+        .pattern {
+            display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .6px;
+            text-transform: uppercase; color: var(--accent); background: var(--accent-soft);
+            padding: 3px 8px; border-radius: 6px; vertical-align: middle; margin-left: 8px;
+        }
+
+        .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; align-items: center; }
+        .chip {
+            border: 1px solid var(--line); background: var(--card); color: var(--ink);
+            padding: 8px 14px; border-radius: 999px; font-weight: 500;
+        }
+        .chip.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+        .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+        .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+        .card h3 { margin: 0; font-size: 17px; }
+        .card .meta { color: var(--muted); font-size: 13px; margin-top: 2px; }
+        .id { font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: var(--muted); }
+        .price { font-size: 22px; font-weight: 700; text-align: right; }
+        .price small { font-size: 12px; color: var(--muted); font-weight: 500; }
+        .facts { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 14px; font-size: 13px; color: var(--muted); }
+        .facts b { color: var(--ink); font-weight: 600; }
+        .stars { color: var(--warm); letter-spacing: 1px; }
+
+        .offer {
+            background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+            padding: 16px 18px; display: grid; grid-template-columns: 34px 1fr auto; gap: 16px; align-items: center;
+            margin-bottom: 10px;
+        }
+        .offer.best { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+        .rank {
+            width: 34px; height: 34px; border-radius: 50%; background: var(--bg);
+            display: grid; place-items: center; font-weight: 700; color: var(--muted);
+        }
+        .offer.best .rank { background: var(--accent); color: #fff; }
+        .offer-parts { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 14px; }
+        .offer-parts span { color: var(--muted); }
+        .offer-parts b { font-weight: 600; color: var(--ink); }
+        .offer-right { display: flex; align-items: center; gap: 14px; }
+        .btn { border: 0; background: var(--accent); color: #fff; padding: 9px 16px; border-radius: 10px; font-weight: 600; }
+        .btn:hover { filter: brightness(1.1); }
+        .btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+        .btn.danger { background: transparent; color: var(--bad); border: 1px solid #e3b7b2; }
+        .btn:disabled { opacity: .35; cursor: not-allowed; filter: none; }
+        .btn.small { padding: 6px 12px; font-size: 13px; }
+
+        .booking {
+            background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+            padding: 16px 18px; display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; margin-bottom: 10px;
+        }
+        .booking .desc { flex: 1; min-width: 240px; }
+        .booking .desc .extras { color: var(--muted); font-size: 13px; }
+        .status { font-size: 12px; font-weight: 700; letter-spacing: .5px; padding: 4px 10px; border-radius: 999px; width: 96px; text-align: center; }
+        .status.PENDING { background: var(--pending-soft); color: var(--pending); }
+        .status.CONFIRMED { background: var(--ok-soft); color: var(--ok); }
+        .status.CANCELLED { background: var(--bad-soft); color: var(--bad); }
+        .booking .actions { display: flex; gap: 8px; }
+        .empty {
+            text-align: center; color: var(--muted); padding: 40px 20px; border: 1px dashed #d6d1c8;
+            border-radius: var(--radius); background: rgba(255,255,255,.5);
+        }
+
+        .tracker-row { display: grid; grid-template-columns: 1fr auto auto; gap: 14px; align-items: center; }
+        .tracker-row + .tracker-row { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 14px; }
+        .price-edit { display: flex; gap: 6px; align-items: center; }
+        .price-edit input { width: 100px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; }
+        .old { text-decoration: line-through; color: var(--muted); font-size: 13px; margin-right: 6px; }
+        .log-item {
+            padding: 10px 14px; border-left: 3px solid var(--ok); background: var(--card);
+            border-radius: 0 10px 10px 0; margin-bottom: 8px; font-size: 14px;
+        }
+        .log-item time { color: var(--muted); font-size: 12px; margin-right: 8px; }
+        .two-col { display: grid; grid-template-columns: 1.3fr 1fr; gap: 18px; align-items: start; }
+        h4 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); }
+
+        .backdrop {
+            position: fixed; inset: 0; background: rgba(20, 28, 38, .45); display: none;
+            align-items: center; justify-content: center; padding: 20px; z-index: 20;
+        }
+        .backdrop.open { display: flex; }
+        .modal { background: var(--card); border-radius: 18px; width: 100%; max-width: 460px; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+        .modal h3 { margin: 0 0 4px; }
+        .summary { background: var(--bg); border-radius: 12px; padding: 12px 14px; margin: 16px 0; font-size: 14px; }
+        .summary div { display: flex; justify-content: space-between; padding: 3px 0; }
+        .summary span { color: var(--muted); }
+        .extra {
+            display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line);
+            border-radius: 12px; margin-bottom: 8px; cursor: pointer;
+        }
+        .extra input { width: 18px; height: 18px; accent-color: var(--accent); }
+        .extra .name { flex: 1; }
+        .extra .name small { display: block; color: var(--muted); }
+        .total-line { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--line); padding-top: 14px; margin-top: 14px; }
+        .total-line b { font-size: 24px; }
+        .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; flex-wrap: wrap; }
+
+        .toasts { position: fixed; right: 20px; bottom: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 30; }
+        .toast {
+            background: var(--ink); color: #fff; padding: 12px 16px; border-radius: 12px; max-width: 340px;
+            font-size: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.2); animation: pop .2s ease-out;
+        }
+        .toast.error { background: var(--bad); }
+        @keyframes pop { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+        @media (max-width: 760px) {
+            .two-col { grid-template-columns: 1fr; }
+            .offer { grid-template-columns: 1fr; }
+            .offer .rank { display: none; }
+            .offer-right { justify-content: space-between; }
+            .route .dates { margin-left: 0; text-align: left; }
+            .route .city { font-size: 28px; }
+            .tracker-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="wrap">
+        <div class="brand"><div class="brand-mark">✈</div> Travel Booking Engine</div>
+        <div class="route">
+            <div><div class="label">From</div><div class="city" id="origin"></div></div>
+            <div class="arrow">→</div>
+            <div><div class="label">To</div><div class="city" id="destination"></div></div>
+            <div class="dates"><div class="label">Dates</div><b id="dates"></b></div>
+        </div>
+        <div class="route-picker">
+            <label class="field"><span class="label">Route</span><select id="routeSelect"></select></label>
+            <label class="field"><span class="label">Departure</span><input type="date" id="dateInput"></label>
+            <label class="field"><span class="label">Nights</span><select id="nightsSelect"></select></label>
+        </div>
+    </div>
+</header>
+
+<nav>
+    <div class="tabs">
+        <button class="tab active" data-tab="search">Search</button>
+        <button class="tab" data-tab="offers">Trip offers</button>
+        <button class="tab" data-tab="bookings">My bookings <span class="count" id="bookingCount" hidden>0</span></button>
+        <button class="tab" data-tab="alerts">Price alerts</button>
+    </div>
+</nav>
+
+<main>
+    <section id="search" class="active">
+        <h2>Search</h2>
+        <p class="sub">Everything available on this route.</p>
+        <div class="toolbar" id="searchFilter">
+            <button class="chip active" data-kind="flights">Flights</button>
+            <button class="chip" data-kind="hotels">Hotels</button>
+            <button class="chip" data-kind="cars">Car rentals</button>
+        </div>
+        <div class="grid" id="searchResults"></div>
+    </section>
+
+    <section id="offers">
+        <h2>Trip offers <span class="pattern">Builder + Strategy</span></h2>
+        <p class="sub">Every combination of flight, hotel and car, built into a package and sorted.</p>
+        <div class="toolbar" id="strategyPicker"><span style="color:var(--muted);margin-right:4px">Sort by:</span></div>
+        <div id="offerList"></div>
+    </section>
+
+    <section id="bookings">
+        <h2>My bookings <span class="pattern">Factory Method + State</span></h2>
+        <p class="sub">New bookings start as pending. Pending can be confirmed or cancelled, confirmed can only be cancelled.</p>
+        <div id="bookingList"></div>
+    </section>
+
+    <section id="alerts">
+        <h2>Price alerts <span class="pattern">Observer</span></h2>
+        <p class="sub">Subscribe to a flight, then change its price. You get a notification only when the price goes down.</p>
+        <div class="two-col">
+            <div class="card" id="trackerList"></div>
+            <div>
+                <h4>Notifications</h4>
+                <div id="notifLog"></div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<div class="backdrop" id="modal">
+    <div class="modal">
+        <h3>Book this trip</h3>
+        <div style="color:var(--muted);font-size:14px">Add extras if you need them <span class="pattern">Decorator</span></div>
+        <div class="summary" id="modalSummary"></div>
+        <label class="extra">
+            <input type="checkbox" id="optInsurance">
+            <div class="name">Travel insurance<small>Medical and cancellation cover</small></div>
+            <b>+$50</b>
+        </label>
+        <label class="extra">
+            <input type="checkbox" id="optBaggage">
+            <div class="name">Extra baggage<small>One more checked bag, 23 kg</small></div>
+            <b>+$30</b>
+        </label>
+        <div class="total-line"><span>Total</span><b id="modalTotal"></b></div>
+        <div class="modal-actions">
+            <button class="btn ghost" id="modalCancel">Cancel</button>
+            <button class="btn ghost" id="modalBook">Book (pending)</button>
+            <button class="btn" id="modalBookConfirm">Book and confirm</button>
+        </div>
+    </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script>
+    // same logic as in the java part (src/main/java/travel)
+
+    // utils
+    const DAY = 24 * 60 * 60 * 1000;
+    const addDays = (d, n) => new Date(d.getTime() + n * DAY);
+    const daysBetween = (a, b) => Math.round((b - a) / DAY);
+    const fmtDate = d => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    const money = n => '$' + Number(n).toFixed(2);
+
+    // models
+    class Flight {
+        constructor(id, airline, origin, destination, departureDate, durationHours, price) {
+            if (!id || !airline || !origin || !destination || !departureDate || durationHours <= 0 || price < 0)
+                throw new Error('Invalid flight data');
+            Object.assign(this, { id, airline, origin, destination, departureDate, durationHours, price });
+        }
+    }
+
+    class Hotel {
+        constructor(id, name, city, checkIn, checkOut, pricePerNight, rating) {
+            if (!id || !name || !city || !(checkOut > checkIn) || pricePerNight < 0 || rating < 0 || rating > 5)
+                throw new Error('Invalid hotel data');
+            Object.assign(this, { id, name, city, checkIn, checkOut, pricePerNight, rating });
+        }
+        nights() { return daysBetween(this.checkIn, this.checkOut); }
+        totalPrice() { return this.pricePerNight * this.nights(); }
+    }
+
+    class CarRental {
+        constructor(id, company, model, city, pickupDate, returnDate, pricePerDay) {
+            if (!id || !company || !model || !city || !(returnDate > pickupDate) || pricePerDay < 0)
+                throw new Error('Invalid car rental data');
+            Object.assign(this, { id, company, model, city, pickupDate, returnDate, pricePerDay });
+        }
+        rentalDays() { return daysBetween(this.pickupDate, this.returnDate); }
+        totalPrice() { return this.pricePerDay * this.rentalDays(); }
+    }
+
+    class TravelPackage {
+        constructor(flight, hotel, carRental) {
+            const same = (a, b) => a.toLowerCase() === b.toLowerCase();
+            if (!same(flight.destination, hotel.city) || !same(hotel.city, carRental.city))
+                throw new Error('Flight destination, hotel city and car city must match');
+            Object.assign(this, { flight, hotel, carRental });
+        }
+        totalPrice() { return this.flight.price + this.hotel.totalPrice() + this.carRental.totalPrice(); }
+        hotelRating() { return this.hotel.rating; }
+    }
+
+    // builder
+    class TripBuilder {
+        withFlight(f) { this.flight = f; return this; }
+        withHotel(h) { this.hotel = h; return this; }
+        withCarRental(c) { this.carRental = c; return this; }
+        build() {
+            if (!this.flight || !this.hotel || !this.carRental)
+                throw new Error('A trip requires a flight, hotel and car rental');
+            return new TravelPackage(this.flight, this.hotel, this.carRental);
+        }
+    }
+
+    // sorting strategies
+    class CheapestOfferStrategy {
+        name() { return 'Lowest total price'; }
+        rank(offers) { return [...offers].sort((a, b) => a.totalPrice() - b.totalPrice()); }
+    }
+    class BestRatedOfferStrategy {
+        name() { return 'Highest hotel rating'; }
+        rank(offers) {
+            return [...offers].sort((a, b) => (b.hotelRating() - a.hotelRating()) || (a.totalPrice() - b.totalPrice()));
+        }
+    }
+
+    // booking states
+    class PendingState {
+        name() { return 'PENDING'; }
+        confirm(b) { b.setState(new ConfirmedState()); }
+        cancel(b) { b.setState(new CancelledState()); }
+    }
+    class ConfirmedState {
+        name() { return 'CONFIRMED'; }
+        confirm() { throw new Error('Booking is already confirmed'); }
+        cancel(b) { b.setState(new CancelledState()); }
+    }
+    class CancelledState {
+        name() { return 'CANCELLED'; }
+        confirm() { throw new Error('A cancelled booking cannot be confirmed'); }
+        cancel() { throw new Error('Booking is already cancelled'); }
+    }
+
+    class Booking {
+        constructor(id, serviceDescription, price) {
+            this.id = id;
+            this.serviceDescription = serviceDescription;
+            this.price = price;
+            this.createdAt = new Date();
+            this.state = new PendingState();
+        }
+        getStatus() { return this.state.name(); }
+        confirm() { this.state.confirm(this); }
+        cancel() { this.state.cancel(this); }
+        setState(s) { this.state = s; }
+    }
+
+    // factory method
+    class BookingCreator {
+        createBooking(description, price) { return this.createProduct(description, price); }
+        nextId() { return 'B-' + Math.random().toString(16).slice(2, 10).toUpperCase(); }
+    }
+    class FlightBookingCreator extends BookingCreator {
+        createProduct(d, p) { return new Booking(this.nextId(), 'Flight booking: ' + d, p); }
+    }
+    class HotelBookingCreator extends BookingCreator {
+        createProduct(d, p) { return new Booking(this.nextId(), 'Hotel booking: ' + d, p); }
+    }
+    class CarBookingCreator extends BookingCreator {
+        createProduct(d, p) { return new Booking(this.nextId(), 'Car booking: ' + d, p); }
+    }
+
+    // decorator (extras)
+    class BasicBooking {
+        constructor(description, price) { this.description = description; this.price = price; }
+        getDescription() { return this.description; }
+        getPrice() { return this.price; }
+    }
+    class BookingDecorator {
+        constructor(booking) { this.booking = booking; }
+        getDescription() { return this.booking.getDescription(); }
+        getPrice() { return this.booking.getPrice(); }
+    }
+    class InsuranceDecorator extends BookingDecorator {
+        getDescription() { return this.booking.getDescription() + ' + Insurance'; }
+        getPrice() { return this.booking.getPrice() + 50; }
+    }
+    class BaggageDecorator extends BookingDecorator {
+        getDescription() { return this.booking.getDescription() + ' + Extra Baggage'; }
+        getPrice() { return this.booking.getPrice() + 30; }
+    }
+
+    // observer
+    class PriceTracker {
+        constructor() { this.prices = new Map(); this.observers = new Map(); }
+        subscribe(itemId, observer) {
+            if (!this.observers.has(itemId)) this.observers.set(itemId, []);
+            this.observers.get(itemId).push(observer);
+        }
+        unsubscribe(itemId, observer) {
+            this.observers.set(itemId, (this.observers.get(itemId) || []).filter(o => o !== observer));
+        }
+        isSubscribed(itemId) { return (this.observers.get(itemId) || []).length > 0; }
+        setInitialPrice(itemId, price) {
+            if (price == null || price < 0) throw new Error('Invalid price');
+            this.prices.set(itemId, price);
+        }
+        updatePrice(itemId, newPrice) {
+            if (newPrice == null || isNaN(newPrice) || newPrice < 0) throw new Error('Invalid price');
+            const oldPrice = this.prices.get(itemId);
+            if (oldPrice == null) throw new Error('No price tracked for ' + itemId);
+            this.prices.set(itemId, newPrice);
+            if (newPrice < oldPrice)
+                (this.observers.get(itemId) || []).forEach(o => o.onPriceDrop(itemId, oldPrice, newPrice));
+        }
+        getCurrentPrice(itemId) { return this.prices.get(itemId); }
+    }
+
+    class UiPriceObserver {
+        constructor(userName) { this.userName = userName; }
+        onPriceDrop(itemId, oldPrice, newPrice) {
+            notifications.unshift({
+                time: new Date(),
+                text: `${this.userName}, price for ${itemId} dropped from ${money(oldPrice)} to ${money(newPrice)}`
+            });
+            toast(`Price drop! ${itemId} is now ${money(newPrice)}`);
+        }
+    }
+
+    // services
+    const eq = (a, b) => a.toLowerCase() === b.toLowerCase();
+    class FlightService {
+        constructor(flights) { this.flights = flights; }
+        search(origin, destination) { return this.flights.filter(f => eq(f.origin, origin) && eq(f.destination, destination)); }
+    }
+    class HotelService {
+        constructor(hotels) { this.hotels = hotels; }
+        search(city) { return this.hotels.filter(h => eq(h.city, city)); }
+    }
+    class CarRentalService {
+        constructor(cars) { this.cars = cars; }
+        search(city) { return this.cars.filter(c => eq(c.city, city)); }
+    }
+    class InMemoryBookingRepository {
+        constructor() { this.bookings = []; }
+        save(b) { this.bookings.push(b); }
+        findAll() { return [...this.bookings]; }
+        findById(id) { return this.bookings.find(b => b.id === id); }
+    }
+
+    // facade
+    class TravelBookingFacade {
+        constructor(flightService, hotelService, carRentalService, bookingRepository, priceTracker) {
+            Object.assign(this, { flightService, hotelService, carRentalService, bookingRepository, priceTracker });
+        }
+        searchFlights(o, d) { return this.flightService.search(o, d); }
+        searchHotels(c) { return this.hotelService.search(c); }
+        searchCars(c) { return this.carRentalService.search(c); }
+        findOffers(origin, destination, city, strategy) {
+            const offers = [];
+            for (const f of this.flightService.search(origin, destination))
+                for (const h of this.hotelService.search(city))
+                    for (const c of this.carRentalService.search(city)) {
+                        try { offers.push(new TripBuilder().withFlight(f).withHotel(h).withCarRental(c).build()); }
+                        catch (e) { /* skip */ }
+                    }
+            return strategy.rank(offers);
+        }
+        book(creator, description, price) {
+            const b = creator.createBooking(description, price);
+            this.bookingRepository.save(b);
+            return b;
+        }
+        findBooking(id) { return this.bookingRepository.findById(id); }
+        getBookings() { return this.bookingRepository.findAll(); }
+        getPriceTracker() { return this.priceTracker; }
+    }
+
+    // data, copied from Main.java
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const MAX_NIGHTS = 14;
+
+    // by default trip is in 30 days for 5 nights
+    let departure = addDays(today, 30);
+    let nights = 5;
+    const returnDate = () => addDays(departure, nights);
+
+    // id, airline, from, to, hours, price
+    const FLIGHT_DATA = [
+        ['F001', 'Air Astana', 'Astana', 'Istanbul', 5.5, 450],
+        ['F002', 'Turkish Airlines', 'Astana', 'Istanbul', 6.0, 520],
+        ['F003', 'Pegasus', 'Astana', 'Istanbul', 7.0, 390],
+        ['F004', 'Air Astana', 'Almaty', 'Istanbul', 6.5, 420],
+        ['F005', 'Pegasus', 'Almaty', 'Istanbul', 7.0, 360],
+        ['F006', 'Air Astana', 'Astana', 'Dubai', 4.5, 380],
+        ['F007', 'flydubai', 'Astana', 'Dubai', 4.5, 310],
+        ['F008', 'Air Astana', 'Almaty', 'Dubai', 4.0, 350],
+        ['F009', 'FlyArystan', 'Almaty', 'Dubai', 4.0, 240],
+        ['F010', 'Air Astana', 'Almaty', 'Tbilisi', 3.5, 280],
+        ['F011', 'FlyArystan', 'Almaty', 'Tbilisi', 3.5, 190],
+        ['F012', 'Air Astana', 'Almaty', 'Seoul', 6.0, 460],
+        ['F013', 'Asiana Airlines', 'Almaty', 'Seoul', 6.0, 510],
+        ['F014', 'Pegasus', 'Astana', 'Antalya', 6.5, 340],
+        ['F015', 'SCAT', 'Astana', 'Antalya', 6.5, 300],
+    ];
+    // id, name, city, price per night, rating
+    const HOTEL_DATA = [
+        ['H001', 'Bosphorus Hotel', 'Istanbul', 120, 4.8],
+        ['H002', 'Old Town Stay', 'Istanbul', 75, 4.2],
+        ['H003', 'Marina View Hotel', 'Dubai', 160, 4.7],
+        ['H004', 'Deira City Inn', 'Dubai', 70, 4.0],
+        ['H005', 'Old Tbilisi Boutique', 'Tbilisi', 85, 4.6],
+        ['H006', 'Rustaveli Hostel', 'Tbilisi', 30, 3.9],
+        ['H007', 'Gangnam Central Hotel', 'Seoul', 140, 4.5],
+        ['H008', 'Myeongdong Guesthouse', 'Seoul', 60, 4.1],
+        ['H009', 'Lara Beach Resort', 'Antalya', 130, 4.6],
+        ['H010', 'Kaleici Pension', 'Antalya', 50, 4.3],
+    ];
+    // id, company, model, city, price per day
+    const CAR_DATA = [
+        ['C001', 'Hertz', 'Toyota Corolla (Compact)', 'Istanbul', 45],
+        ['C002', 'Avis', 'Hyundai Elantra (Compact)', 'Istanbul', 40],
+        ['C003', 'Sixt', 'Kia Rio (Economy)', 'Istanbul', 28],
+        ['C004', 'Europcar', 'Toyota RAV4 (SUV)', 'Istanbul', 65],
+        ['C005', 'Sixt', 'Mercedes E-Class (Premium)', 'Istanbul', 120],
+        ['C006', 'Hertz', 'Kia Rio (Economy)', 'Dubai', 30],
+        ['C007', 'Avis', 'Kia Sportage (SUV)', 'Dubai', 60],
+        ['C008', 'Sixt', 'BMW 5 Series (Premium)', 'Dubai', 130],
+        ['C009', 'Europcar', 'Hyundai Staria (Van)', 'Dubai', 80],
+        ['C010', 'Avis', 'Chevrolet Cobalt (Economy)', 'Tbilisi', 25],
+        ['C011', 'Hertz', 'Toyota RAV4 (SUV)', 'Tbilisi', 62],
+        ['C012', 'Europcar', 'Hyundai Staria (Van)', 'Tbilisi', 78],
+        ['C013', 'Hertz', 'Hyundai Elantra (Compact)', 'Seoul', 42],
+        ['C014', 'Avis', 'Kia Sportage (SUV)', 'Seoul', 65],
+        ['C015', 'Sixt', 'Hyundai Staria (Van)', 'Seoul', 85],
+        ['C016', 'Europcar', 'Kia Rio (Economy)', 'Antalya', 27],
+        ['C017', 'Sixt', 'Toyota Corolla (Compact)', 'Antalya', 40],
+        ['C018', 'Avis', 'Toyota RAV4 (SUV)', 'Antalya', 60],
+    ];
+
+    const routes = [...new Set(FLIGHT_DATA.map(f => f[2] + '|' + f[3]))].map(r => r.split('|'));
+    let origin = 'Astana';
+    let destination = 'Istanbul';
+
+    // these two are shared so bookings dont reset when dates change
+    const tracker = new PriceTracker();
+    FLIGHT_DATA.forEach(([id, , , , , price]) => tracker.setInitialPrice(id, price));
+    const bookingRepository = new InMemoryBookingRepository();
+
+    // rebuild everything with new dates
+    function createApplication() {
+        const back = returnDate();
+        const flights = FLIGHT_DATA.map(([id, airline, from, to, hours, price]) =>
+            new Flight(id, airline, from, to, departure, hours, price));
+        const hotels = HOTEL_DATA.map(([id, name, city, perNight, rating]) =>
+            new Hotel(id, name, city, departure, back, perNight, rating));
+        const cars = CAR_DATA.map(([id, company, model, city, perDay]) =>
+            new CarRental(id, company, model, city, departure, back, perDay));
+        return new TravelBookingFacade(
+            new FlightService(flights), new HotelService(hotels), new CarRentalService(cars),
+            bookingRepository, tracker
+        );
+    }
+    let app = createApplication();
+
+    // ui
+    const strategies = [new CheapestOfferStrategy(), new BestRatedOfferStrategy()];
+    let currentStrategy = strategies[0];
+    let currentOffers = [];
+    let searchKind = 'flights';
+    let selectedTrip = null;
+    const notifications = [];
+    const observers = new Map();
+    const $ = id => document.getElementById(id);
+
+    function toast(text, isError) {
+        const el = document.createElement('div');
+        el.className = 'toast' + (isError ? ' error' : '');
+        el.textContent = text;
+        $('toasts').appendChild(el);
+        setTimeout(() => el.remove(), 3500);
+    }
+    // model looks like "Kia Rio (Economy)"
+    const carName = c => c.model.replace(/\s*\(.*\)$/, '');
+    const carClass = c => (c.model.match(/\((.*)\)$/) || [])[1] || '';
+    const stars = r => '★'.repeat(Math.round(r)) + '☆'.repeat(5 - Math.round(r));
+
+    // route select
+    $('routeSelect').innerHTML = routes.map(([o, d]) =>
+        `<option value="${o}|${d}">${o} → ${d}</option>`).join('');
+    $('routeSelect').value = origin + '|' + destination;
+    $('routeSelect').addEventListener('change', e => {
+        [origin, destination] = e.target.value.split('|');
+        renderRoute();
+    });
+    function renderRoute() {
+        $('origin').textContent = origin;
+        $('destination').textContent = destination;
+        renderSearch();
+        renderOffers();
+        renderTracker();
+    }
+
+    // dates
+    const toInputValue = d =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const fromInputValue = v => { const [y, m, d] = v.split('-').map(Number); return new Date(y, m - 1, d); };
+
+    $('dateInput').min = toInputValue(addDays(today, 1));
+    $('dateInput').value = toInputValue(departure);
+    $('nightsSelect').innerHTML = Array.from({ length: MAX_NIGHTS }, (_, i) =>
+        `<option value="${i + 1}">${i + 1} ${i === 0 ? 'night' : 'nights'}</option>`).join('');
+    $('nightsSelect').value = nights;
+
+    function changeDates() {
+        const picked = $('dateInput').value ? fromInputValue($('dateInput').value) : null;
+        if (!picked || picked <= today) {
+            toast('Please choose a date after today', true);
+            $('dateInput').value = toInputValue(departure);
+            return;
+        }
+        departure = picked;
+        nights = +$('nightsSelect').value;
+        app = createApplication();
+        renderDates();
+        renderRoute();
+    }
+    $('dateInput').addEventListener('change', changeDates);
+    $('nightsSelect').addEventListener('change', changeDates);
+
+    function renderDates() {
+        $('dates').textContent = `${fmtDate(departure)} – ${fmtDate(returnDate())} · ${nights} ${nights === 1 ? 'night' : 'nights'}`;
+    }
+    renderDates();
+
+    document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === t));
+        document.querySelectorAll('section').forEach(s => s.classList.toggle('active', s.id === t.dataset.tab));
+    }));
+
+    // search
+    document.querySelectorAll('#searchFilter .chip').forEach(c => c.addEventListener('click', () => {
+        searchKind = c.dataset.kind;
+        document.querySelectorAll('#searchFilter .chip').forEach(x => x.classList.toggle('active', x === c));
+        renderSearch();
+    }));
+
+    function renderSearch() {
+        let html = '';
+        if (searchKind === 'flights') {
+            html = app.searchFlights(origin, destination).map(f => `
+      <div class="card">
+        <div class="card-top">
+          <div><h3>${f.airline}</h3><div class="id">${f.id}</div></div>
+          <div class="price">${money(f.price)}</div>
+        </div>
+        <div class="facts">
+          <span><b>${f.origin} → ${f.destination}</b></span>
+          <span>${fmtDate(f.departureDate)}</span>
+          <span>${f.durationHours} h</span>
+        </div>
+      </div>`).join('');
+        } else if (searchKind === 'hotels') {
+            html = app.searchHotels(destination).map(h => `
+      <div class="card">
+        <div class="card-top">
+          <div><h3>${h.name}</h3><div class="id">${h.id}</div></div>
+          <div class="price">${money(h.totalPrice())}<br><small>${money(h.pricePerNight)} / night</small></div>
+        </div>
+        <div class="facts">
+          <span class="stars">${stars(h.rating)}</span><span><b>${h.rating}</b></span>
+          <span>${h.nights()} nights</span>
+        </div>
+      </div>`).join('');
+        } else {
+            html = app.searchCars(destination).map(c => `
+      <div class="card">
+        <div class="card-top">
+          <div><h3>${carName(c)}</h3><div class="meta">${c.company} · <span class="id">${c.id}</span></div>
+            ${carClass(c) ? `<span class="car-class">${carClass(c)}</span>` : ''}</div>
+          <div class="price">${money(c.totalPrice())}<br><small>${money(c.pricePerDay)} / day</small></div>
+        </div>
+        <div class="facts">
+          <span>${c.rentalDays()} days</span>
+          <span>Pick up in ${c.city}</span>
+        </div>
+      </div>`).join('');
+        }
+        $('searchResults').innerHTML = html || '<div class="empty">Nothing found.</div>';
+    }
+
+    // offers
+    strategies.forEach((s, i) => {
+        const b = document.createElement('button');
+        b.className = 'chip' + (i === 0 ? ' active' : '');
+        b.textContent = s.name();
+        b.addEventListener('click', () => {
+            currentStrategy = s;
+            document.querySelectorAll('#strategyPicker .chip').forEach(x => x.classList.toggle('active', x === b));
+            renderOffers();
+        });
+        $('strategyPicker').appendChild(b);
+    });
+
+    function renderOffers() {
+        currentOffers = app.findOffers(origin, destination, destination, currentStrategy);
+        if (!currentOffers.length) { $('offerList').innerHTML = '<div class="empty">No compatible offers.</div>'; return; }
+        $('offerList').innerHTML = currentOffers.map((o, i) => `
+    <div class="offer ${i === 0 ? 'best' : ''}">
+      <div class="rank">${i + 1}</div>
+      <div class="offer-parts">
+        <div><span>Flight</span> <b>${o.flight.airline}</b></div>
+        <div><span>Hotel</span> <b>${o.hotel.name}</b> <span class="stars">★</span>${o.hotel.rating}</div>
+        <div><span>Car</span> <b>${o.carRental.model}</b></div>
+      </div>
+      <div class="offer-right">
+        <div class="price">${money(o.totalPrice())}</div>
+        <button class="btn small" data-offer="${i}">Book</button>
+      </div>
+    </div>`).join('');
+        document.querySelectorAll('[data-offer]').forEach(b =>
+            b.addEventListener('click', () => openModal(currentOffers[+b.dataset.offer])));
+    }
+
+    // booking popup
+    function decoratedBooking() {
+        const t = selectedTrip;
+        const when = `${fmtDate(t.hotel.checkIn)} – ${fmtDate(t.hotel.checkOut)}, ${t.hotel.nights()} nights`;
+        let item = new BasicBooking(`Complete trip: ${t.flight.origin} to ${t.flight.destination} (${when})`, t.totalPrice());
+        if ($('optInsurance').checked) item = new InsuranceDecorator(item);
+        if ($('optBaggage').checked) item = new BaggageDecorator(item);
+        return item;
+    }
+
+    function openModal(trip) {
+        selectedTrip = trip;
+        $('optInsurance').checked = false;
+        $('optBaggage').checked = false;
+        $('modalSummary').innerHTML = `
+    <div><span>Flight</span>${trip.flight.airline} · ${money(trip.flight.price)}</div>
+    <div><span>Hotel</span>${trip.hotel.name} · ${money(trip.hotel.totalPrice())}</div>
+    <div><span>Car</span>${trip.carRental.model} · ${money(trip.carRental.totalPrice())}</div>`;
+        updateTotal();
+        $('modal').classList.add('open');
+    }
+    const closeModal = () => $('modal').classList.remove('open');
+    const updateTotal = () => { $('modalTotal').textContent = money(decoratedBooking().getPrice()); };
+
+    $('optInsurance').addEventListener('change', updateTotal);
+    $('optBaggage').addEventListener('change', updateTotal);
+    $('modalCancel').addEventListener('click', closeModal);
+    $('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+
+    function makeBooking(confirmNow) {
+        const item = decoratedBooking();
+        const booking = app.book(new FlightBookingCreator(), item.getDescription(), item.getPrice());
+        if (confirmNow) booking.confirm();
+        closeModal();
+        renderBookings();
+        toast(`Booking ${booking.id} created (${booking.getStatus().toLowerCase()})`);
+    }
+    $('modalBook').addEventListener('click', () => makeBooking(false));
+    $('modalBookConfirm').addEventListener('click', () => makeBooking(true));
+
+    // my bookings
+    function renderBookings() {
+        const list = app.getBookings().reverse();
+        $('bookingCount').hidden = !list.length;
+        $('bookingCount').textContent = list.length;
+        if (!list.length) {
+            $('bookingList').innerHTML = '<div class="empty">No bookings yet. Pick something in <b>Trip offers</b>.</div>';
+            return;
+        }
+        $('bookingList').innerHTML = list.map(b => {
+            const [main, ...extras] = b.serviceDescription.split(' + ');
+            const st = b.getStatus();
+            const when = b.createdAt.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+            return `
+    <div class="booking">
+      <span class="status ${st}">${st}</span>
+      <div class="desc">
+        <div><b>${main}</b></div>
+        <div class="extras">${extras.length ? 'Extras: ' + extras.join(', ') + ' · ' : ''}<span class="id">${b.id}</span> · ${when}</div>
+      </div>
+      <div class="price">${money(b.price)}</div>
+      <div class="actions">
+        <button class="btn small" data-act="confirm" data-id="${b.id}" ${st !== 'PENDING' ? 'disabled' : ''}>Confirm</button>
+        <button class="btn small danger" data-act="cancel" data-id="${b.id}" ${st === 'CANCELLED' ? 'disabled' : ''}>Cancel</button>
+      </div>
+    </div>`;
+        }).join('');
+        document.querySelectorAll('[data-act]').forEach(btn => btn.addEventListener('click', () => {
+            const b = app.findBooking(btn.dataset.id);
+            try {
+                if (btn.dataset.act === 'confirm') b.confirm(); else b.cancel();
+                toast(`Booking ${b.id}: ${b.getStatus().toLowerCase()}`);
+            } catch (e) { toast(e.message, true); }
+            renderBookings();
+        }));
+    }
+
+    // price alerts
+    function renderTracker() {
+        const tr = app.getPriceTracker();
+        $('trackerList').innerHTML = app.searchFlights(origin, destination).map(f => {
+            const cur = tr.getCurrentPrice(f.id);
+            const sub = tr.isSubscribed(f.id);
+            return `
+    <div class="tracker-row">
+      <div>
+        <b>${f.airline}</b> <span class="id">${f.id}</span>
+        <div>${cur !== f.price ? `<span class="old">${money(f.price)}</span>` : ''}<b>${money(cur)}</b></div>
+      </div>
+      <div class="price-edit">
+        <input type="number" min="0" step="10" value="${cur}" id="p-${f.id}">
+        <button class="btn small ghost" data-set="${f.id}">Set price</button>
+      </div>
+      <button class="btn small ${sub ? '' : 'ghost'}" data-sub="${f.id}">${sub ? '✓ Subscribed' : 'Subscribe'}</button>
+    </div>`;
+        }).join('');
+
+        document.querySelectorAll('[data-sub]').forEach(b => b.addEventListener('click', () => {
+            const id = b.dataset.sub;
+            if (observers.has(id)) {
+                tr.unsubscribe(id, observers.get(id));
+                observers.delete(id);
+                toast('Unsubscribed from ' + id);
+            } else {
+                const o = new UiPriceObserver('Demo User');
+                tr.subscribe(id, o);
+                observers.set(id, o);
+                toast('Subscribed to ' + id);
+            }
+            renderTracker();
+        }));
+        document.querySelectorAll('[data-set]').forEach(b => b.addEventListener('click', () => {
+            const id = b.dataset.set;
+            const before = tr.getCurrentPrice(id);
+            try {
+                const value = parseFloat($('p-' + id).value);
+                tr.updatePrice(id, value);
+                if (!(value < before && tr.isSubscribed(id))) toast(`Price for ${id} set to ${money(value)}, no alert sent`);
+            } catch (e) { toast(e.message, true); }
+            renderTracker();
+            renderLog();
+        }));
+    }
+
+    function renderLog() {
+        $('notifLog').innerHTML = notifications.length
+            ? notifications.map(n => `<div class="log-item"><time>${n.time.toLocaleTimeString('en-GB')}</time>${n.text}</div>`).join('')
+            : '<div class="empty">No notifications yet.</div>';
+    }
+
+    renderRoute();
+    renderBookings();
+    renderLog();
+</script>
+</body>
+</html>
