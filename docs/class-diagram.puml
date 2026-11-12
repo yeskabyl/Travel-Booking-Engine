@@ -1,0 +1,70 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+class TravelBookingFacade {
+  - FlightService flightService
+  - HotelService hotelService
+  - CarRentalService carRentalService
+  + findOffers(origin, destination, city, strategy)
+  + book(creator, description)
+}
+
+class FlightService
+class HotelService
+class CarRentalService
+
+interface OfferStrategy {
+  + rank(offers)
+}
+class CheapestOfferStrategy
+class BestRatedOfferStrategy
+OfferStrategy <|.. CheapestOfferStrategy
+OfferStrategy <|.. BestRatedOfferStrategy
+
+class TripBuilder {
+  + withFlight(flight)
+  + withHotel(hotel)
+  + withCarRental(car)
+  + build()
+}
+class TravelPackage
+TripBuilder ..> TravelPackage
+
+interface PriceObserver {
+  + onPriceDrop(itemId, oldPrice, newPrice)
+}
+class PriceTracker
+class ConsolePriceObserver
+PriceObserver <|.. ConsolePriceObserver
+PriceTracker o-- PriceObserver
+
+abstract class BookingCreator {
+  + createBooking(description)
+  # createProduct(description)
+}
+class FlightBookingCreator
+class HotelBookingCreator
+class CarBookingCreator
+BookingCreator <|-- FlightBookingCreator
+BookingCreator <|-- HotelBookingCreator
+BookingCreator <|-- CarBookingCreator
+
+class Booking
+interface BookingState {
+  + confirm(booking)
+  + cancel(booking)
+}
+class PendingState
+class ConfirmedState
+class CancelledState
+BookingState <|.. PendingState
+BookingState <|.. ConfirmedState
+BookingState <|.. CancelledState
+Booking o-- BookingState
+
+TravelBookingFacade --> FlightService
+TravelBookingFacade --> HotelService
+TravelBookingFacade --> CarRentalService
+TravelBookingFacade ..> OfferStrategy
+TravelBookingFacade ..> BookingCreator
+@enduml
