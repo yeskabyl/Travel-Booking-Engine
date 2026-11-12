@@ -32,10 +32,13 @@ Provides interchangeable algorithms for selecting, filtering, and sorting travel
 ### 4. Observer Pattern
 Implements a notification mechanism for changes in travel prices.
 
-### 5. Decorator Pattern
+### 5. State Pattern
+Manages the booking lifecycle. A booking starts as Pending and can be confirmed or cancelled. Each status (Pending, Confirmed, Cancelled) is a separate class that decides which actions are allowed, so a cancelled booking can't be confirmed again.
+
+### 6. Decorator Pattern
 Allows additional booking features, such as insurance and baggage, to be added dynamically.
 
-### 6. Facade Pattern
+### 7. Facade Pattern
 Provides a simplified interface for interacting with travel booking subsystems.
 
 ## Project Structure
