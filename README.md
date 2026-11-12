@@ -79,13 +79,3 @@ docs/
   sequence-booking.puml
 ```
 
-## Notes for the defense
-
-- Facade delegates search to the three service classes.
-- Strategy ranks complete package offers using different criteria.
-- Builder assembles the selected flight, hotel and car into a `TravelPackage`.
-- Factory Method creates the correct booking subtype for each service.
-- State prevents invalid transitions, such as confirming a cancelled booking.
-- Observer notifies registered listeners when the tracked price falls.
-
-The demo uses in-memory repositories, so data resets when the application restarts. SQLite persistence and real external APIs are possible future extensions.
