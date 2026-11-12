@@ -2,6 +2,10 @@
 
 A Java 17 console application demonstrating six design patterns in one cohesive travel-booking workflow.
 
+## About the Project
+
+Travel Booking Engine is a console-based application developed using Java.
+
 <img width="2562" height="1068" alt="image" src="https://github.com/user-attachments/assets/39c25fa2-fb7a-4abc-affb-2c052427c5cc" />
 
 
