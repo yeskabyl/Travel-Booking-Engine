@@ -6,7 +6,7 @@
 
 ## About the Project
 
-Travel Booking Engine is a console-based application developed using Java. The project demonstrates object-oriented programming principles and the practical application of software design patterns.
+Travel Booking Engine is a console-based application developed using Java.
 
 The system is designed to manage travel booking operations and demonstrate flexible software architecture through reusable components.
 
@@ -14,29 +14,48 @@ The system is designed to manage travel booking operations and demonstrate flexi
 
 - Develop a structured Java console application.
 - Apply object-oriented programming principles.
-- Implement six software design patterns.
+- Implement seven software design patterns.
 - Improve code reusability and maintainability.
 - Demonstrate modular software architecture.
 
 ## Design Patterns
 
-### 1. Builder Pattern
-Used to construct complex travel packages step by step.
+| Pattern | Where | Purpose |
+|---|---|---|
+| Builder | `builder/TripBuilder` | Assembles a trip package (flight, hotel, car) step by step |
+| Factory Method | `factory/BookingCreator` and subclasses | Creates flight, hotel and car bookings |
+| Strategy | `strategy/OfferStrategy` and implementations | Offer ranking (lowest price or best hotel rating) chosen at runtime |
+| Observer | `observer/PriceTracker`, `observer/PriceObserver` | Notifies subscribers when a tracked price drops |
+| Decorator | `decorator/BookingDecorator` and subclasses | Adds insurance and extra baggage to a booking's price and description |
+| Facade | `facade/TravelBookingFacade` | One entry point for search, offers, bookings and price tracking |
+| State | `state/BookingState` and implementations | Allows only valid status changes: pending → confirmed or cancelled, confirmed → cancelled |
 
-### 2. Factory Method Pattern
-Encapsulates the creation of different booking types.
+## How the patterns work together
 
-### 3. Strategy Pattern
-Provides interchangeable algorithms for selecting, filtering, and sorting travel offers.
+The patterns form one pipeline: each step of a booking is handled by the pattern responsible for it.
 
-### 4. Observer Pattern
-Implements a notification mechanism for changes in travel prices.
+```text
+Main (console menu)
+ └─ TravelBookingFacade ............................................. Facade
+     ├─ findOffers()
+     │   ├─ TripBuilder assembles every flight + hotel + car ...... Builder
+     │   └─ OfferStrategy ranks the packages ...................... Strategy
+     ├─ (in Main) BasicBooking + Insurance / Baggage ................ Decorator
+     ├─ book()
+     │   └─ BookingCreator creates the Booking .................... Factory Method
+     │       └─ Booking: PENDING → CONFIRMED / CANCELLED ........ State
+     └─ getPriceTracker()
+         └─ PriceTracker notifies PriceObservers on a price drop .... Observer
+```
 
-### 5. Decorator Pattern
-Allows additional booking features, such as insurance and baggage, to be added dynamically.
+1. **Facade.** `Main` creates one `TravelBookingFacade` from the flight, hotel and car services, the booking repository and the price tracker. All search, offers, bookings and price tracking go through it.
+2. **Builder.** `findOffers()` takes every flight, hotel and car on the route and assembles each combination into a `TravelPackage` with `TripBuilder`. Invalid combinations (cities that don't match) are skipped.
+3. **Strategy.** The user picks `CheapestOfferStrategy` or `BestRatedOfferStrategy`, and the facade gets it as a parameter to rank the packages. A new ranking rule is a new class; the facade does not change.
+4. **Decorator.** The chosen package becomes a `BasicBooking`. Each extra wraps it: `InsuranceDecorator` adds $50, `BaggageDecorator` adds $30, and both add their name to the description.
+5. **Factory Method.** `book()` receives a `BookingCreator` and lets it create the `Booking` with a new ID, then saves it to the repository. The facade never calls `new Booking(...)` itself.
+6. **State.** Every new `Booking` starts in `PendingState`. `confirm()` and `cancel()` are delegated to the current state, which either moves the booking on or rejects the action (for example, confirming a cancelled booking).
 
-### 6. Facade Pattern
-Provides a simplified interface for interacting with travel booking subsystems.
+**Observer** runs next to the booking flow. The user subscribes a `ConsolePriceObserver` to a flight through the facade's `PriceTracker`. When `updatePrice()` sets a lower price, the tracker notifies every subscriber of that flight; a price increase sends no alert.
 
 ## Project Structure
 
@@ -50,6 +69,7 @@ travel-booking-engine/
 │   │   └── java/
 │   │       └── travel/
 │   │           ├── builder/
+│   │           ├── decorator/
 │   │           ├── facade/
 │   │           ├── factory/
 │   │           ├── models/
