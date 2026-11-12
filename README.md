@@ -2,6 +2,9 @@
 
 A Java 17 console application demonstrating six design patterns in one cohesive travel-booking workflow.
 
+<img width="2562" height="1068" alt="image" src="https://github.com/user-attachments/assets/39c25fa2-fb7a-4abc-affb-2c052427c5cc" />
+
+
 ## Features
 
 - Search demo flights, hotels and car rentals.
